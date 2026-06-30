@@ -39,7 +39,7 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-only-change-me")
 BOOKS_ROOT = Path(os.environ.get("BOOKS_ROOT", "/books"))
 ANILIST_URL = "https://graphql.anilist.co"
 BOOK_EXTENSIONS = {".cbz", ".cbr", ".cb7", ".epub", ".pdf"}
-VOLUME_NUM_RE = re.compile(r"(?:vol(?:ume)?\.?\s*)(\d{1,4})", re.IGNORECASE)
+VOLUME_NUM_RE = re.compile(r"\bv(?:ol(?:ume)?)?\.?\s*(\d{1,4})\b", re.IGNORECASE)
 
 SEARCH_QUERY = """
 query ($search: String) {
@@ -137,8 +137,48 @@ def extract_volume_number(filename: str) -> int | None:
     return int(match.group(1)) if match else None
 
 
-@app.route("/")
-def index():
+GRIMMORY_BASE_URL = os.environ.get("GRIMMORY_BASE_URL", "").rstrip("/")
+GRIMMORY_USERNAME = os.environ.get("GRIMMORY_USERNAME", "")
+GRIMMORY_PASSWORD = os.environ.get("GRIMMORY_PASSWORD", "")
+GRIMMORY_LIBRARY_NAME = os.environ.get("GRIMMORY_LIBRARY_NAME", "Manga")
+
+
+def grimmory_api_configured() -> bool:
+    return bool(GRIMMORY_BASE_URL and GRIMMORY_USERNAME and GRIMMORY_PASSWORD)
+
+
+def grimmory_request(method: str, path: str, token: str | None = None, body: dict | None = None) -> dict:
+    url = f"{GRIMMORY_BASE_URL}{path}"
+    headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    data = json.dumps(body).encode() if body is not None else None
+    req = request.Request(url, data=data, headers=headers, method=method)
+    with request.urlopen(req, timeout=20) as resp:
+        raw = resp.read()
+        return json.loads(raw) if raw else {}
+
+
+def grimmory_login() -> str:
+    result = grimmory_request(
+        "POST", "/api/v1/auth/login", body={"username": GRIMMORY_USERNAME, "password": GRIMMORY_PASSWORD}
+    )
+    return result["accessToken"]
+
+
+def grimmory_find_library_id(token: str, library_name: str) -> int | None:
+    libraries = grimmory_request("GET", "/api/v1/libraries", token=token)
+    for lib in libraries:
+        if lib.get("name") == library_name:
+            return lib.get("id")
+    return None
+
+
+def grimmory_bulk_import_sidecar(token: str, library_id: int) -> dict:
+    return grimmory_request("POST", f"/api/v1/libraries/{library_id}/sidecar/import-all", token=token)
+
+
+
     folders = list_series_folders()
     return render_template("index.html", folders=folders, books_root=str(BOOKS_ROOT))
 
@@ -196,7 +236,6 @@ def select():
     genres = media.get("genres", [])
     authors = build_authors(media)
     series_total = media.get("volumes")
-    published_date = build_published_date(media)
 
     files = list_book_files(folder)
     rows = []
@@ -211,7 +250,6 @@ def select():
         genres=genres,
         authors=authors,
         series_total=series_total if series_total is not None else "",
-        published_date=published_date or "",
         rows=rows,
     )
 
@@ -230,7 +268,6 @@ def generate():
     authors = [a for a in flask_request.form.get("authors", "").split(",") if a]
     series_total_raw = flask_request.form.get("series_total", "").strip()
     series_total = int(series_total_raw) if series_total_raw.isdigit() else None
-    published_date = flask_request.form.get("published_date", "").strip() or None
 
     filenames = flask_request.form.getlist("filename")
     volumes = flask_request.form.getlist("volume")
@@ -260,15 +297,36 @@ def generate():
                 "series": series_obj,
             },
         }
-        if published_date:
-            sidecar["metadata"]["publishedDate"] = published_date
+        # NOTE: deliberately NOT setting publishedDate here. AniList only
+        # has the series' original release date, which would be wrong if
+        # applied to every volume. Use Grimmory's own Goodreads/Google
+        # Books providers instead (Settings > Metadata 2) - those list
+        # each volume separately with real per-volume dates.
 
         book_path = folder / filename
         out_path = book_path.with_suffix("").with_suffix(".metadata.json")
         out_path.write_text(json.dumps(sidecar, indent=2, ensure_ascii=False), encoding="utf-8")
         written.append(out_path.name)
 
-    return render_template("result.html", folder=folder_name, written=written, skipped=skipped)
+    api_result = {"attempted": False}
+    if grimmory_api_configured() and written:
+        api_result["attempted"] = True
+        try:
+            token = grimmory_login()
+            library_id = grimmory_find_library_id(token, GRIMMORY_LIBRARY_NAME)
+            if library_id is None:
+                api_result["error"] = f"Library '{GRIMMORY_LIBRARY_NAME}' not found in Grimmory."
+            else:
+                grimmory_bulk_import_sidecar(token, library_id)
+                api_result["success"] = True
+        except error.HTTPError as e:
+            api_result["error"] = f"Grimmory API error: {e.code} - {e.read().decode(errors='ignore')[:300]}"
+        except error.URLError as e:
+            api_result["error"] = f"Couldn't reach Grimmory: {e.reason}"
+        except Exception as e:
+            api_result["error"] = f"Unexpected error: {e}"
+
+    return render_template("result.html", folder=folder_name, written=written, skipped=skipped, api_result=api_result)
 
 
 if __name__ == "__main__":

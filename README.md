@@ -30,6 +30,24 @@ support natively).
 4. Click "Generate sidecar files" - writes one `.metadata.json` per book
 5. In Grimmory: Settings > Metadata 2 > your manga library > Import Sidecar
 
+## Auto-import into Grimmory (optional)
+
+By default you still need to click Import Sidecar in Grimmory after running
+this tool. To have it import automatically instead, set these in
+`docker-compose.yml`:
+
+- `GRIMMORY_BASE_URL` - e.g. `http://192.168.0.33:6060`
+- `GRIMMORY_USERNAME` / `GRIMMORY_PASSWORD` - a Grimmory login. Consider
+  creating a separate user for this (Settings > Users) rather than using
+  your admin account, since the password is stored in plain text in the
+  compose file.
+- `GRIMMORY_LIBRARY_NAME` - must match your manga library's name exactly
+  (default: `Manga`)
+
+With these set, after generating sidecars the tool logs into Grimmory's API
+and calls its bulk sidecar import endpoint automatically - no manual click
+needed.
+
 ## Notes
 
 - JoJo's Bizarre Adventure is split into separate AniList entries per part -

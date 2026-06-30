@@ -11,4 +11,13 @@ services:
     environment:
       - BOOKS_ROOT=/books
       - FLASK_SECRET_KEY=eL7gQWBUCfkmrDSOER+0n1/eJEZ/z8OW9uEvD4BXFIahYnACVdI5votzbsaccTKv
+      # Optional: enables automatic import into Grimmory after generating
+      # sidecars, instead of clicking Import Sidecar manually. Uses a
+      # regular Grimmory login, not an API key - consider creating a
+      # dedicated low-privilege Grimmory user for this rather than using
+      # your admin account, since the password sits in this compose file.
+      - GRIMMORY_BASE_URL=http://192.168.0.33:6060
+      - GRIMMORY_USERNAME=manga
+      - GRIMMORY_PASSWORD=Nuzlocke9!
+      - GRIMMORY_LIBRARY_NAME=Manga
     restart: unless-stopped

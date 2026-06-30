@@ -20,8 +20,10 @@
     <label for="series_total">Total volumes (leave blank if unknown)</label>
     <input type="text" id="series_total" name="series_total" value="{{ series_total }}">
 
-    <label for="published_date">Published date (YYYY-MM-DD, optional)</label>
-    <input type="text" id="published_date" name="published_date" value="{{ published_date }}">
+    <p class="muted">Published date isn't set here - AniList only has the series' original
+    release year, which would be wrong if applied to every volume. After importing these
+    sidecars, use Grimmory's Goodreads/Google Books providers (Settings &gt; Metadata 2,
+    Replace Missing Only) to fetch real per-volume publish dates instead.</p>
   </div>
 
   <div class="panel">

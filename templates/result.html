@@ -10,7 +10,17 @@
     <p class="muted">Skipped (no volume number given):</p>
     <ul>{% for s in skipped %}<li><code>{{ s }}</code></li>{% endfor %}</ul>
   {% endif %}
-  <p class="muted">Next: in Grimmory go to Settings &gt; Metadata 2 &gt; this library &gt; Import Sidecar.</p>
+
+  {% if api_result.attempted %}
+    {% if api_result.success %}
+      <p>✅ Automatically imported into Grimmory via API.</p>
+    {% else %}
+      <p class="flash">⚠️ Sidecars were written to disk, but the automatic Grimmory import failed: {{ api_result.error }}</p>
+      <p class="muted">You can still import manually: Settings &gt; Metadata 2 &gt; this library &gt; Import Sidecar.</p>
+    {% endif %}
+  {% else %}
+    <p class="muted">Next: in Grimmory go to Settings &gt; Metadata 2 &gt; this library &gt; Import Sidecar.</p>
+  {% endif %}
 </div>
 <a class="btn" href="{{ url_for('index') }}">Do another series</a>
 {% endblock %}
