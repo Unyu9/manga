@@ -147,14 +147,14 @@ def grimmory_api_configured() -> bool:
     return bool(GRIMMORY_BASE_URL and GRIMMORY_USERNAME and GRIMMORY_PASSWORD)
 
 
-def grimmory_request(method: str, path: str, token: str | None = None, body: dict | None = None) -> dict:
+def grimmory_request(method: str, path: str, token: str | None = None, body: dict | None = None, timeout: int = 20) -> dict:
     url = f"{GRIMMORY_BASE_URL}{path}"
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
     data = json.dumps(body).encode() if body is not None else None
     req = request.Request(url, data=data, headers=headers, method=method)
-    with request.urlopen(req, timeout=20) as resp:
+    with request.urlopen(req, timeout=timeout) as resp:
         raw = resp.read()
         return json.loads(raw) if raw else {}
 
@@ -175,7 +175,11 @@ def grimmory_find_library_id(token: str, library_name: str) -> int | None:
 
 
 def grimmory_bulk_import_sidecar(token: str, library_id: int) -> dict:
-    return grimmory_request("POST", f"/api/v1/libraries/{library_id}/sidecar/import-all", token=token)
+    # This reprocesses every book in the library, not just new ones - can
+    # take a while for large libraries, so give it plenty of room.
+    return grimmory_request(
+        "POST", f"/api/v1/libraries/{library_id}/sidecar/import-all", token=token, timeout=300
+    )
 
 
 @app.route("/")
