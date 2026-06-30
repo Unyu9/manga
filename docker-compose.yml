@@ -7,8 +7,8 @@ services:
     volumes:
       # Point this at the SAME path Grimmory itself uses for your manga
       # library, so volume numbers/filenames line up with what's imported.
-      - /volume1/data/manga:/books
+      - /volume1/books:/books
     environment:
       - BOOKS_ROOT=/books
-      - FLASK_SECRET_KEY=eL7gQWBUCfkmrDSOER+0n1/eJEZ/z8OW9uEvD4BXFIahYnACVdI5votzbsaccTKv
+      - FLASK_SECRET_KEY=change-me-to-something-random
     restart: unless-stopped

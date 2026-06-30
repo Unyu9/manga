@@ -80,7 +80,11 @@ def anilist_query(query: str, variables: dict) -> dict:
     req = request.Request(
         ANILIST_URL,
         data=payload,
-        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "GrimmorySidecarTool/1.0 (+https://github.com/)",
+        },
         method="POST",
     )
     with request.urlopen(req, timeout=15) as resp:
@@ -151,7 +155,11 @@ def search():
     try:
         data = anilist_query(SEARCH_QUERY, {"search": title})
     except error.HTTPError as e:
-        flash(f"AniList search failed: {e.code}")
+        body = e.read().decode(errors="ignore")[:300]
+        flash(f"AniList search failed: {e.code} - {body}")
+        return redirect(url_for("index"))
+    except error.URLError as e:
+        flash(f"Couldn't reach AniList: {e.reason}")
         return redirect(url_for("index"))
 
     results = data.get("data", {}).get("Page", {}).get("media", [])
@@ -171,7 +179,11 @@ def select():
     try:
         data = anilist_query(DETAIL_QUERY, {"id": anilist_id})
     except error.HTTPError as e:
-        flash(f"AniList lookup failed: {e.code}")
+        body = e.read().decode(errors="ignore")[:300]
+        flash(f"AniList lookup failed: {e.code} - {body}")
+        return redirect(url_for("index"))
+    except error.URLError as e:
+        flash(f"Couldn't reach AniList: {e.reason}")
         return redirect(url_for("index"))
 
     media = data.get("data", {}).get("Media")
