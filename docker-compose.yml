@@ -1,0 +1,14 @@
+services:
+  grimmory-sidecar-tool:
+    build: .
+    container_name: grimmory-sidecar-tool
+    ports:
+      - "5005:5000"
+    volumes:
+      # Point this at the SAME path Grimmory itself uses for your manga
+      # library, so volume numbers/filenames line up with what's imported.
+      - /volume1/data/manga:/books
+    environment:
+      - BOOKS_ROOT=/books
+      - FLASK_SECRET_KEY=eL7gQWBUCfkmrDSOER+0n1/eJEZ/z8OW9uEvD4BXFIahYnACVdI5votzbsaccTKv
+    restart: unless-stopped
