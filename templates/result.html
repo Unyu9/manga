@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="panel">
+  <p class="muted">Folder: <code>{{ folder }}</code></p>
+  <p><strong>{{ written|length }}</strong> sidecar file(s) written.</p>
+  {% if written %}
+    <ul>{% for w in written %}<li><code>{{ w }}</code></li>{% endfor %}</ul>
+  {% endif %}
+  {% if skipped %}
+    <p class="muted">Skipped (no volume number given):</p>
+    <ul>{% for s in skipped %}<li><code>{{ s }}</code></li>{% endfor %}</ul>
+  {% endif %}
+  <p class="muted">Next: in Grimmory go to Settings &gt; Metadata 2 &gt; this library &gt; Import Sidecar.</p>
+</div>
+<a class="btn" href="{{ url_for('index') }}">Do another series</a>
+{% endblock %}

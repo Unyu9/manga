@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block content %}
+<form method="post" action="{{ url_for('generate') }}">
+  <input type="hidden" name="folder" value="{{ folder }}">
+
+  <div class="panel">
+    <p class="muted">Folder: <code>{{ folder }}</code></p>
+    <label for="matched_title">Series title (used in every sidecar)</label>
+    <input type="text" id="matched_title" name="matched_title" value="{{ matched_title }}">
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description">{{ description }}</textarea>
+
+    <label for="genres">Genres (comma-separated)</label>
+    <input type="text" id="genres" name="genres" value="{{ genres|join(', ') }}">
+
+    <label for="authors">Authors (comma-separated)</label>
+    <input type="text" id="authors" name="authors" value="{{ authors|join(', ') }}">
+
+    <label for="series_total">Total volumes (leave blank if unknown)</label>
+    <input type="text" id="series_total" name="series_total" value="{{ series_total }}">
+
+    <label for="published_date">Published date (YYYY-MM-DD, optional)</label>
+    <input type="text" id="published_date" name="published_date" value="{{ published_date }}">
+  </div>
+
+  <div class="panel">
+    <p class="muted">Review the volume number parsed from each filename. Clear a box to skip that file.</p>
+    <table>
+      <thead><tr><th>File</th><th style="width:100px;">Volume #</th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.filename }}</td>
+          <td>
+            <input type="hidden" name="filename" value="{{ row.filename }}">
+            <input type="text" name="volume" value="{{ row.volume }}" inputmode="numeric">
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <button type="submit">Generate sidecar files</button>
+  <a class="btn btn-secondary" href="{{ url_for('index') }}">Cancel</a>
+</form>
+{% endblock %}

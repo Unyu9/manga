@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="panel">
+  <p class="muted">Folder: <code>{{ folder }}</code> &middot; Searched: "{{ title }}"</p>
+  {% if not results %}
+    <p>No AniList matches found. <a class="btn btn-secondary" href="{{ url_for('index') }}">Back</a></p>
+  {% else %}
+    <p>Pick the correct series:</p>
+    {% for r in results %}
+      <form method="post" action="{{ url_for('select') }}" style="margin:0;">
+        <input type="hidden" name="folder" value="{{ folder }}">
+        <input type="hidden" name="anilist_id" value="{{ r.id }}">
+        <div class="result-card">
+          {% if r.coverImage and r.coverImage.medium %}
+            <img src="{{ r.coverImage.medium }}" alt="">
+          {% endif %}
+          <div style="flex:1;">
+            <strong>{{ r.title.english or r.title.romaji }}</strong>
+            {% if r.title.native %}<span class="muted"> ({{ r.title.native }})</span>{% endif %}
+            <div class="meta">
+              {{ r.format or "?" }} &middot; {{ r.status or "?" }}
+              {% if r.startDate and r.startDate.year %} &middot; {{ r.startDate.year }}{% endif %}
+              {% if r.volumes %} &middot; {{ r.volumes }} volumes{% endif %}
+            </div>
+          </div>
+          <button type="submit">Use this</button>
+        </div>
+      </form>
+    {% endfor %}
+  {% endif %}
+  <p style="margin-top:1rem;"><a class="btn btn-secondary" href="{{ url_for('index') }}">Back to folders</a></p>
+</div>
+{% endblock %}

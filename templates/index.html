@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="panel">
+  <p class="muted">Scanning <code>{{ books_root }}</code></p>
+  {% if folders %}
+    <p>Pick the series folder you want to generate sidecars for:</p>
+    <div class="folder-grid">
+      {% for f in folders %}
+        <form method="post" action="{{ url_for('search') }}" style="margin:0;">
+          <input type="hidden" name="folder" value="{{ f }}">
+          <input type="hidden" name="title" value="{{ f }}">
+          <button type="submit">{{ f }}</button>
+        </form>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No subfolders found. Check that <code>BOOKS_ROOT</code> is mounted correctly.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <p class="muted">Or search with a folder name and a custom title (useful if the folder name doesn't match AniList well, e.g. a specific JoJo part):</p>
+  <form method="post" action="{{ url_for('search') }}">
+    <label for="folder">Folder name</label>
+    <select id="folder" name="folder">
+      {% for f in folders %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+    </select>
+    <label for="title">AniList search title</label>
+    <input type="text" id="title" name="title" placeholder="e.g. JoJo's Bizarre Adventure Part 1">
+    <button type="submit">Search AniList</button>
+  </form>
+</div>
+{% endblock %}
