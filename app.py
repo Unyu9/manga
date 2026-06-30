@@ -178,7 +178,8 @@ def grimmory_bulk_import_sidecar(token: str, library_id: int) -> dict:
     return grimmory_request("POST", f"/api/v1/libraries/{library_id}/sidecar/import-all", token=token)
 
 
-
+@app.route("/")
+def index():
     folders = list_series_folders()
     return render_template("index.html", folders=folders, books_root=str(BOOKS_ROOT))
 
